@@ -1,4 +1,15 @@
+var option;
+$(function() {
+  $("#location").change(function(){
+       option = $('option:selected', this).attr('value');
+       if(currentplace!=undefined){
+        distance(currentplace);
+       }
+     });
+});
+
 var map; // Access global
+var currentplace;
 
 //markerGroups in my map (all icons get from https://icons8.com/)
 var markerGroups = {
@@ -31,13 +42,25 @@ function initMap(){
 }
 //function to calculate distance and walking time to the university
 function distance(destination){
+  currentplace=destination;
+  var travel;
+  if(option=="WALKING"){
+    travel = google.maps.TravelMode.WALKING;
+  }else if (option=="DRIVING") {
+    travel = google.maps.TravelMode.DRIVING;
+  }else if (option=="BICYCLING") {
+      travel = google.maps.TravelMode.BICYCLING;
+  }else{
+    travel = google.maps.TravelMode.WALKING;
+    option="WALKING";
+  }
 var origin = new google.maps.LatLng(41.8708, -87.6505),
     service = new google.maps.DistanceMatrixService();
     service.getDistanceMatrix(
     {
         origins: [origin],
         destinations: [destination],
-        travelMode: google.maps.TravelMode.WALKING,
+        travelMode: travel,
         unitSystem: google.maps.UnitSystem.IMPERIAL,
         avoidHighways: false,
         avoidTolls: false
@@ -47,8 +70,9 @@ var origin = new google.maps.LatLng(41.8708, -87.6505),
 
 function callback(response, status) {
     if(status=="OK") {
+        document.getElementById("dist").innerHTML = "<b>Distance to the University:</b>";
         document.getElementById("distance").innerHTML = "<b>Distance to the University:</b> <em>" + response.rows[0].elements[0].distance.text + "</em>";
-        document.getElementById("duration").innerHTML =  "<b>Walking time to the University:</b> <em>" + response.rows[0].elements[0].duration.text + "</em>";
+        document.getElementById("duration").innerHTML =  "<b>"+option+" time to the University:</b> <em>" + response.rows[0].elements[0].duration.text + "</em>";
     } else {
         alert("Error: " + status);
     }
@@ -67,35 +91,57 @@ function loadingHouses() {
 	        var text = myArr;
 	        var json = JSON.parse(text);
 	        var numberOfH= json.data.length;
-          for(var i=0; i<numberOfH; i++){
-            var data=[];
-            var comunityname=json.data[i][8];
-            data.push(comunityname);
-            var comunityarea=json.data[i][9];
-            data.push(comunityarea);
-            var proptype=json.data[i][10];
-            data.push(proptype);
-            var propname=json.data[i][11];
-            data.push(propname);
-            var address=json.data[i][12];
-            data.push(address);
-            var phone=json.data[i][14];
-            data.push(phone);
-            var managcompany=json.data[i][15];
-            data.push(managcompany);
-            var units=json.data[i][16];
-            data.push(units);
-            var latLng ="";
-            if(json.data[i][19]!=null){
-  	        	latLng = JSON.parse('{ "lat":'+ json.data[i][19]+', "lng":'+ json.data[i][20]+' }');
-              var destination = new google.maps.LatLng(json.data[i][19], json.data[i][20]);
-              data.push(destination);
-              iconh='images/home.png';
-              type="houses";
-              var marker= createMarker(latLng, propname, type, map, iconh,data);
-              marker.setVisible(false);
-            }
+          var xmlhttp2 = new XMLHttpRequest();
+          var url = "https://api.myjson.com/bins/19rgl7";
+        	xmlhttp2.open("GET", url, true);
+        	xmlhttp2.send();
+          xmlhttp2.onreadystatechange = function() {
+            if (xmlhttp2.readyState == 4 && xmlhttp2.status == 200) {
+              var myArr = xmlhttp2.responseText;
+    	        var text = myArr;
+    	        var jsonprices = JSON.parse(text);
+              var numberareas= jsonprices.data.CommunityArea.length;
+              for(var i=0; i<numberOfH; i++){
+                var data=[];
+                var comunityname=json.data[i][8];
+                data.push(comunityname);
+                var comunityarea=json.data[i][9];
+                data.push(comunityarea);
+                var proptype=json.data[i][10];
+                data.push(proptype);
+                var propname=json.data[i][11];
+                data.push(propname);
+                var address=json.data[i][12];
+                data.push(address);
+                var phone=json.data[i][14];
+                data.push(phone);
+                var managcompany=json.data[i][15];
+                data.push(managcompany);
+                var units=json.data[i][16];
+                data.push(units);
+                for (var j=0; j<numberareas;j++){
+                  if(data[0]==jsonprices.data.CommunityArea[j].name){
+                    var maxrent= jsonprices.data.CommunityArea[j].maxPrice;
+                    data.push(maxrent);
+                    var minrent= jsonprices.data.CommunityArea[j].minPrice;
+                    data.push(minrent);
+                    var avgrent= jsonprices.data.CommunityArea[j].averagePrice;
+                    data.push(avgrent);
+                  }
+                }
+                var latLng ="";
+                if(json.data[i][19]!=null){
+      	        	latLng = JSON.parse('{ "lat":'+ json.data[i][19]+', "lng":'+ json.data[i][20]+' }');
+                  var destination = new google.maps.LatLng(json.data[i][19], json.data[i][20]);
+                  data.push(destination);
+                  iconh='images/home.png';
+                  type="houses";
+                  var marker= createMarker(latLng, propname, type, map, iconh,data);
+                  marker.setVisible(false);
+                }
+              }
           }
+        }
 		}
 	}
 }
@@ -367,7 +413,11 @@ function createMarker(latLng, name, type, map, icono,data) {
       document.getElementById("fourdata").innerHTML = "<b>Phone Number:</b> <em>" + data[5] + "</em>";
       document.getElementById("fivedata").innerHTML = "<b>Management Company:</b> <em>" + data[6] + "</em>";
       document.getElementById("sixdata").innerHTML = "<b>Avaliable Units:</b> <em>" + data[7] + "</em>";
-      distance(data[8]);
+      document.getElementById("price").innerHTML = "<b>Rent prices for this Place by Community Zone</b>";
+      document.getElementById("minrent").innerHTML = "<b>Minimum rent price:</b> <em>$" + data[9] + "</em>";
+      document.getElementById("maxrent").innerHTML = "<b>Maximum rent price:</b> <em>$" + data[8] + "</em>";
+      document.getElementById("avgrent").innerHTML = "<b>Average rent price:</b> <em>$" + data[10] + "</em>";
+      distance(data[11]);
     });
   }
   return marker;

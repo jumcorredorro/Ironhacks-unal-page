@@ -11,8 +11,13 @@
           <div id = "fivedata"></div>
           <div id = "sixdata"></div>
           <div id = "sevendata"></div>
+          <div id = "dist"></div>
           <div id = "distance"></div>
           <div id = "duration"></div>
+          <div id = "price"></div>
+          <div id = "minrent"></div>
+          <div id = "maxrent"></div>
+          <div id = "avgrent"></div>
         </div>
         <h2>Show me</h2>
         <p><input type="checkbox" id="houses" onclick="toggleGroup('houses')"/>
@@ -22,7 +27,14 @@
         <label>Police Stations </label> <input type="checkbox" id="firestation" onclick="toggleGroup('firestations')"/>
         <label>Fire Stations </label> <input type="checkbox" id="condoms" onclick="toggleGroup('condoms')"/>
         <label>Condom Dist Sites </label></p>
-    </form>
+        <h2>Distance: Define the mode of time calculation</h2>
+        <p>Default:walking</p>
+        <select id="location">
+           <option value="WALKING">Select the mode</option>
+           <option value="WALKING">Walking</option>
+           <option value="DRIVING">Driving</option>
+           <option value="BICYCLING">Bicycling</option>
+         </select>
 </div>
 <div id="container">
      <div id="map"></div>
